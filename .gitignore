@@ -1,0 +1,7 @@
+bin
+worlds
+configs
+scenes
+!scenes/base_scene.json
+venv
+.idea
