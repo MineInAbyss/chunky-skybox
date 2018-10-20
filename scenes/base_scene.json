@@ -1,8 +1,8 @@
 {
   "sdfVersion": 9,
   "name": "template",
-  "width": 1024,
-  "height": 1024,
+  "width": 512,
+  "height": 512,
   "yClipMin": 0,
   "yClipMax": 256,
   "exposure": 1.0,
@@ -11,7 +11,7 @@
   "renderTime": 59,
   "spp": 0,
   "sppTarget": 1000,
-  "rayDepth": 5,
+  "rayDepth": 3,
   "pathTrace": false,
   "dumpFrequency": 500,
   "saveSnapshots": false,
@@ -32,7 +32,7 @@
   "transparentSky": true,
   "fogDensity": 0.0,
   "waterHeight": 0,
-  "renderActors": true,
+  "renderActors": false,
   "world": {
     "path": "template",
     "dimension": 0
@@ -55,7 +55,7 @@
     "focalOffset": 2.0
   },
   "sun": {
-    "altitude": 1.0471975511965976,
+    "altitude": 1.5707963267948966,
     "azimuth": 1.2566370614359172,
     "intensity": 1.25,
     "color": {
