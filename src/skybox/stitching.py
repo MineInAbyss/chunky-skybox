@@ -1,13 +1,15 @@
 from PIL import Image
+import os
+from glob import glob
 
 
 class Stitcher:
-    def __init__(self, north, south, east, west, top, bottom):
+    def __init__(self, north, south, east, west, up, bottom):
         self.south = south
         self.west = west
         self.east = east
-        self.top = top
-        self.bottom = bottom
+        self.up = up
+        self.down = bottom
         self.north = north
 
     def _load_image(self, path):
@@ -25,36 +27,65 @@ class Stitcher:
                 assert im1.size == img.size
 
     def stitch(self, output_path):
-        s_img = self._load_image(self.south)
-        n_img = self._load_image(self.north)
-        w_img = self._load_image(self.west)
-        e_img = self._load_image(self.east)
-
-        self._assert_same_size([s_img, n_img, w_img, e_img])
-
-        box_size = s_img.size[0]
+        box_size = 512
 
         width = box_size * 3
         height = box_size * 2
 
         skybox_img = Image.new('RGBA', (width, height))
 
-        skybox_img.paste(w_img, (0, box_size))
-        skybox_img.paste(n_img, (box_size, box_size))
-        skybox_img.paste(e_img, (box_size * 2, box_size))
-        skybox_img.paste(s_img, (box_size * 2, 0))
+        # self._assert_same_size([s_img, n_img, w_img, e_img])
+
+        for path in reversed(self.south):
+            img = self._load_image(path)
+            skybox_img.paste(img, (box_size * 2, 0), img)
+
+        for path in reversed(self.north):
+            img = self._load_image(path)
+
+            skybox_img.paste(img, (box_size, box_size), img)
+
+        for path in reversed(self.east):
+            img = self._load_image(path)
+            skybox_img.paste(img, (box_size * 2, box_size), img)
+
+        for path in reversed(self.west):
+            img = self._load_image(path)
+            skybox_img.paste(img, (0, box_size), img)
+
+        for path in reversed(self.down):
+            img = self._load_image(path)
+            skybox_img.paste(img, (0, 0), img)
+
+        for path in reversed(self.up):
+            img = self._load_image(path)
+            skybox_img.paste(img, (0, 0), img)
+
 
         skybox_img.save(output_path)
 
 
 if __name__ == "__main__":
-    scene_dir = '../../scenes/city_scene/'
+    scene_dir = '../../scenes/city/'
 
-    n = "{}skybox_north.png".format(scene_dir)
-    s = "{}skybox_south.png".format(scene_dir)
-    w = "{}skybox_west.png".format(scene_dir)
-    e = "{}skybox_east.png".format(scene_dir)
+    data = {}
 
-    stitcher = Stitcher(n, s, e, w, None, None)
+    files = glob(scene_dir+'*_*.png')
+    for f_name in files:
+        base_name = os.path.splitext(os.path.basename(f_name))[0]
+        direction = base_name.split("_")[2]
 
-    stitcher.stitch("skybox.png")
+        data.setdefault(direction, []).append(f_name)
+
+
+    for key, list in data.items():
+        list.sort(key=lambda a: os.path.splitext(os.path.basename(a))[0].split("_")[0])
+
+    # n = "{}{}_skybox_north.png".format(scene_dir,0)
+    # s = "{}{}_skybox_south.png".format(scene_dir,0)
+    # w = "{}{}_skybox_west.png".format(scene_dir,0)
+    # e = "{}{}_skybox_east.png".format(scene_dir,0)
+    #
+    stitcher = Stitcher(data.setdefault("north", []), data.setdefault("south", []), data.setdefault("east", []), data.setdefault("west", []), data.setdefault("up", []), data.setdefault("down", []))
+
+    stitcher.stitch(scene_dir+"skybox.png")
