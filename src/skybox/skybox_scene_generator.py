@@ -59,10 +59,17 @@ skybox_orientations = {
     }
 }
 
-skybox_down = {
-    "roll": 0.0,
-    "pitch": 0.0,
-    "yaw": 0.0
+vertical_orientations = {
+    "skybox_down" : {
+        "roll": 0.0,
+        "pitch": 0.0,
+        "yaw": 0.0
+    },
+    "skybox_up" : {
+        "roll": 0.0,
+        "pitch": math.pi,
+        "yaw": 0.0
+    }
 }
 
 
@@ -122,7 +129,7 @@ def get_needed_scenes(section):
             "z": z
         }
         generate_cardinal_scenes(below, index, camera_pos, root)
-        generate_down_scene(below, index, camera_pos, root)
+        generate_vertical_scene(below, index, camera_pos, root, "skybox_down")
 
         index += 1
         current = below
@@ -145,7 +152,7 @@ def get_needed_scenes(section):
             "z": z
         }
         generate_cardinal_scenes(above, index, camera_pos, root)
-        generate_down_scene(above, index, camera_pos, root)
+        generate_vertical_scene(above, index, camera_pos, root, "skybox_up")
 
         index -= 1
         current = above
@@ -170,7 +177,7 @@ def generate_cardinal_scenes(section, index, camera_pos, root):
             json.dump(scene, fp)
 
 
-def generate_down_scene(section, index, camera_pos, root):
+def generate_vertical_scene(section, index, camera_pos, root, flag):
     scene = copy.deepcopy(base_scene)
     world_path = os.path.abspath('../../worlds/' + section.world)
     chunks = generate_chunks(*section.region)
@@ -180,10 +187,10 @@ def generate_down_scene(section, index, camera_pos, root):
 
     # All these scenes will share chunks so use the same name!
     scene['name'] = str(index)
-    scene['camera']['orientation'] = skybox_down
+    scene['camera']['orientation'] = vertical_orientations[flag]
     scene['camera']['position'] = camera_pos
 
-    with open(root + str(index) + '_' + "skybox_down" + ".json", 'w+') as fp:
+    with open(root + str(index) + '_' + flag + ".json", 'w+') as fp:
         json.dump(scene, fp)
 
 
