@@ -1,8 +1,8 @@
 {
   "sdfVersion": 9,
   "name": "template",
-  "width": 512,
-  "height": 512,
+  "width": 1024,
+  "height": 1024,
   "yClipMin": 0,
   "yClipMax": 256,
   "exposure": 1.0,

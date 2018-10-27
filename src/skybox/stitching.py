@@ -27,7 +27,7 @@ class Stitcher:
                 assert im1.size == img.size
 
     def stitch(self, output_path):
-        box_size = 512
+        box_size = 1024
 
         width = box_size * 3
         height = box_size * 2
@@ -38,35 +38,35 @@ class Stitcher:
 
         for path in reversed(self.south):
             img = self._load_image(path)
-            skybox_img.paste(img, (box_size * 2, 0), img)
+            skybox_img.alpha_composite(img, (box_size * 2, 0))
 
         for path in reversed(self.north):
             img = self._load_image(path)
 
-            skybox_img.paste(img, (box_size, box_size), img)
+            skybox_img.alpha_composite(img, (box_size, box_size))
 
         for path in reversed(self.east):
             img = self._load_image(path)
-            skybox_img.paste(img, (box_size * 2, box_size), img)
+            skybox_img.alpha_composite(img, (box_size * 2, box_size))
 
         for path in reversed(self.west):
             img = self._load_image(path)
-            skybox_img.paste(img, (0, box_size), img)
+            skybox_img.alpha_composite(img, (0, box_size))
 
         for path in reversed(self.down):
             img = self._load_image(path)
-            skybox_img.paste(img, (0, 0), img)
+            skybox_img.alpha_composite(img, (0, 0))
 
         for path in reversed(self.up):
             img = self._load_image(path)
-            skybox_img.paste(img, (0, 0), img)
+            skybox_img.alpha_composite(img, (0, 0))
 
 
         skybox_img.save(output_path)
 
 
 if __name__ == "__main__":
-    scene_dir = '../../scenes/city/'
+    scene_dir = '../../scenes/l1s2/'
 
     data = {}
 
@@ -79,7 +79,7 @@ if __name__ == "__main__":
 
 
     for key, list in data.items():
-        list.sort(key=lambda a: os.path.splitext(os.path.basename(a))[0].split("_")[0])
+        list.sort(key=lambda a: abs(int(os.path.splitext(os.path.basename(a))[0].split("_")[0])))
 
     # n = "{}{}_skybox_north.png".format(scene_dir,0)
     # s = "{}{}_skybox_south.png".format(scene_dir,0)
