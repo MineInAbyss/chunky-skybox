@@ -2,6 +2,7 @@ bin
 worlds
 configs
 scenes
+texturepack
 !scenes/base_scene.json
 venv
 .idea

@@ -5,7 +5,6 @@ import os
 import operator
 import copy
 
-
 # Generate the chunks that should be in the render
 def generate_chunks(x1, z1, x2, z2):
     # return [[1,1]]
@@ -63,12 +62,12 @@ vertical_orientations = {
     "skybox_down" : {
         "roll": 0.0,
         "pitch": 0.0,
-        "yaw": 0.0
+        "yaw": -1.5707963267948966
     },
     "skybox_up" : {
         "roll": 0.0,
         "pitch": math.pi,
-        "yaw": 0.0
+        "yaw": -1.5707963267948966
     }
 }
 
@@ -96,6 +95,19 @@ class Section:
 # TODO top and bottom of boxes are a pain
 def get_needed_scenes(section):
     # First get the standard scenes:
+
+    # TODO I would like to make an option to render by offsetting to get center coordinates
+    # Generate skybox by finding its position relative to the top-most skybox
+    # center_x = section.refTop[0]  # get the x and z coordinates of this section's refTop
+    # center_y = section.refTop[2]
+
+    # next_section = section.get_above()  # this doesn't work right now because section.above returns above->current->below and not the actual section
+    # while next_section is not None:
+    #     center_x -= next_section.refBottom[0]
+    #     center_y -= next_section.refBottom[2]
+    #     next_section = section.get_above()
+
+    # generate skybox by finding center of region
     center_x = (section.region[0] + section.region[2]) / 2
     center_y = (section.region[1] + section.region[3]) / 2
     camera_pos = {
@@ -139,6 +151,7 @@ def get_needed_scenes(section):
     current = section
     above = section.above
     center_to_translate = (center_x, 128, center_y)
+    print(current)
 
     index = -1
 
@@ -151,7 +164,8 @@ def get_needed_scenes(section):
             "y": y,
             "z": z
         }
-        generate_cardinal_scenes(above, index, camera_pos, root)
+        if index > -3:  # There is essentially never a useful cardinal scene 3 sections above, so we can ignore them
+            generate_cardinal_scenes(above, index, camera_pos, root)
         generate_vertical_scene(above, index, camera_pos, root, "skybox_up")
 
         index -= 1
