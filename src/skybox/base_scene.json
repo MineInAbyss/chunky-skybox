@@ -55,8 +55,8 @@
     "focalOffset": 2.0
   },
   "sun": {
-    "altitude": 1.5707963267948966,
-    "azimuth": 1.2566370614359172,
+	"altitude":1.5707963267948966,
+	"azimuth":1.5707963267948966,
     "intensity": 1.25,
     "color": {
       "red": 1.0,
@@ -64,34 +64,34 @@
       "blue": 1.0
     }
   },
-  "sky": {
-    "skyYaw": 0.0,
-    "skyMirrored": true,
-    "skyLight": 1.0,
-    "mode": "SIMULATED",
-    "horizonOffset": 0.1,
-    "cloudsEnabled": false,
-    "cloudSize": 64.0,
-    "cloudOffset": {
-      "x": 0.0,
-      "y": 128.0,
-      "z": 0.0
-    },
-    "gradient": [
-      {
-        "rgb": "0BABC7",
-        "pos": 0.0
+   "sky":{  
+      "skyYaw":0.0,
+      "skyMirrored":true,
+      "skyLight":1.0,
+      "mode":"SOLID_COLOR",
+      "horizonOffset":0.1,
+      "cloudsEnabled":false,
+      "cloudSize":64.0,
+      "cloudOffset":{  
+         "x":0.0,
+         "y":128.0,
+         "z":0.0
       },
-      {
-        "rgb": "75AAFF",
-        "pos": 1.0
-      }
-    ],
-    "color": [
-      0.0,
-      0.0,
-      0.0
-    ]
+      "gradient":[  
+         {  
+            "rgb":"0BABC7",
+            "pos":0.0
+         },
+         {  
+            "rgb":"75AAFF",
+            "pos":1.0
+         }
+      ],
+      "color":[  
+         0.4274509847164154,
+         0.5843137502670288,
+         1.0
+      ]
   },
   "cameraPresets": {},
   "materials": {},

@@ -1,4 +1,5 @@
-from PIL import Image
+from PIL import Image, ImageFilter, ImageChops
+import ntpath
 import os
 from glob import glob
 
@@ -55,18 +56,24 @@ class Stitcher:
 
         for path in reversed(self.down):
             img = self._load_image(path)
+            # section = (abs(int(" ".join(ntpath.basename(path).split('_', 1)[:1]))) - 1) /2
+            # if section > 0:
+            #     img = img.filter(ImageFilter.GaussianBlur(radius= section)) #  testing blurring sections
             skybox_img.alpha_composite(img, (0, 0))
 
         for path in reversed(self.up):
             img = self._load_image(path)
-            skybox_img.alpha_composite(img, (0, 0))
+            # section = (abs(int(" ".join(ntpath.basename(path).split('_', 1)[:1]))) - 1) /2
+            # if section > 0:
+            #     img = img.filter(ImageFilter.GaussianBlur(radius= section))
+            skybox_img.alpha_composite(img, (box_size, 0))
 
 
         skybox_img.save(output_path)
 
 
 if __name__ == "__main__":
-    scene_dir = '../../scenes/l1s2/'
+    scene_dir = '../../scenes/l1s1/'
 
     data = {}
 
