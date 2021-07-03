@@ -1,5 +1,7 @@
+import pathlib
+
 from PIL import Image, ImageFilter, ImageChops
-import ntpath
+from functools import reduce
 import os
 from glob import glob
 
@@ -27,7 +29,23 @@ class Stitcher:
             for img in imgs[1:]:
                 assert im1.size == img.size
 
-    def stitch(self, output_path):
+    @staticmethod
+    def compose(x, y):
+        x.alpha_composite(y)
+        return x
+
+    def stitch_region(self, paths):
+        if not paths:
+            return None
+        images_in_order = reversed([self._load_image(path) for path in paths])
+        return reduce(self.compose, images_in_order)
+
+    def stitch_main(self, skybox_image, postprocess, composite, region):
+        if not composite:
+            return
+        skybox_image.alpha_composite(postprocess(composite), region)
+
+    def stitch(self, postprocess=lambda img: img):
         box_size = 1024
 
         width = box_size * 3
@@ -37,62 +55,41 @@ class Stitcher:
 
         # self._assert_same_size([s_img, n_img, w_img, e_img])
 
-        for path in reversed(self.south):
-            img = self._load_image(path)
-            skybox_img.alpha_composite(img, (box_size * 2, 0))
+        self.stitch_main(skybox_img, postprocess, self.stitch_region(self.south), (box_size * 2, 0))
+        self.stitch_main(skybox_img, postprocess, self.stitch_region(self.north), (box_size, box_size))
+        self.stitch_main(skybox_img, postprocess, self.stitch_region(self.east), (box_size * 2, box_size))
+        self.stitch_main(skybox_img, postprocess, self.stitch_region(self.west), (0, box_size))
+        self.stitch_main(skybox_img, postprocess, self.stitch_region(self.down), (0, 0))
+        self.stitch_main(skybox_img, postprocess, self.stitch_region(self.up), (box_size, 0))
 
-        for path in reversed(self.north):
-            img = self._load_image(path)
-
-            skybox_img.alpha_composite(img, (box_size, box_size))
-
-        for path in reversed(self.east):
-            img = self._load_image(path)
-            skybox_img.alpha_composite(img, (box_size * 2, box_size))
-
-        for path in reversed(self.west):
-            img = self._load_image(path)
-            skybox_img.alpha_composite(img, (0, box_size))
-
-        for path in reversed(self.down):
-            img = self._load_image(path)
-            # section = (abs(int(" ".join(ntpath.basename(path).split('_', 1)[:1]))) - 1) /2
-            # if section > 0:
-            #     img = img.filter(ImageFilter.GaussianBlur(radius= section)) #  testing blurring sections
-            skybox_img.alpha_composite(img, (0, 0))
-
-        for path in reversed(self.up):
-            img = self._load_image(path)
-            # section = (abs(int(" ".join(ntpath.basename(path).split('_', 1)[:1]))) - 1) /2
-            # if section > 0:
-            #     img = img.filter(ImageFilter.GaussianBlur(radius= section))
-            skybox_img.alpha_composite(img, (box_size, 0))
-
-
-        skybox_img.save(output_path)
+        return skybox_img
 
 
 if __name__ == "__main__":
-    scene_dir = '../../scenes/l1s1/'
+    scene_dir = '../../scenes/city/'
 
     data = {}
 
-    files = glob(scene_dir+'*_*.png')
+    files = glob(scene_dir + "snapshots/" + '*_*.png')
     for f_name in files:
         base_name = os.path.splitext(os.path.basename(f_name))[0]
-        direction = base_name.split("_")[2]
+        direction = base_name.split("_")[3]
 
         data.setdefault(direction, []).append(f_name)
 
-
     for key, list in data.items():
-        list.sort(key=lambda a: abs(int(os.path.splitext(os.path.basename(a))[0].split("_")[0])))
+        list.sort(key=lambda a: abs(int(os.path.splitext(os.path.basename(a))[0].split("_")[1])))
 
     # n = "{}{}_skybox_north.png".format(scene_dir,0)
     # s = "{}{}_skybox_south.png".format(scene_dir,0)
     # w = "{}{}_skybox_west.png".format(scene_dir,0)
     # e = "{}{}_skybox_east.png".format(scene_dir,0)
     #
-    stitcher = Stitcher(data.setdefault("north", []), data.setdefault("south", []), data.setdefault("east", []), data.setdefault("west", []), data.setdefault("up", []), data.setdefault("down", []))
+    stitcher = Stitcher(data.setdefault("north", []), data.setdefault("south", []), data.setdefault("east", []),
+                        data.setdefault("west", []), data.setdefault("up", []), data.setdefault("down", []))
 
-    stitcher.stitch(scene_dir+"skybox.png")
+    pathlib.Path(scene_dir + "renders/").mkdir(parents=True, exist_ok=True)
+
+    # lambda image: image.filter(ImageFilter.GaussianBlur(radius=3))
+    result = stitcher.stitch().save(
+        scene_dir + "renders/" + "skybox.png")

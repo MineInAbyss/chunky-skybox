@@ -5,6 +5,7 @@ import os
 import operator
 import copy
 
+
 # Generate the chunks that should be in the render
 def generate_chunks(x1, z1, x2, z2):
     # return [[1,1]]
@@ -59,12 +60,12 @@ skybox_orientations = {
 }
 
 vertical_orientations = {
-    "skybox_down" : {
+    "skybox_down": {
         "roll": 0.0,
         "pitch": 0.0,
         "yaw": -1.5707963267948966
     },
-    "skybox_up" : {
+    "skybox_up": {
         "roll": 0.0,
         "pitch": math.pi,
         "yaw": -1.5707963267948966
@@ -123,7 +124,7 @@ def get_needed_scenes(section):
     except Exception:
         pass
 
-    generate_cardinal_scenes(section, 0, camera_pos, root)
+    generate_multi_camera(section, 0, camera_pos, root, None)
 
     current = section
     below = section.below
@@ -140,13 +141,15 @@ def get_needed_scenes(section):
             "y": y,
             "z": z
         }
-        generate_cardinal_scenes(below, index, camera_pos, root)
-        generate_vertical_scene(below, index, camera_pos, root, "skybox_down")
+
+        if index > 3:  # Only 3 scenes below
+            break
+
+        generate_multi_camera(below, index, camera_pos, root, False)
 
         index += 1
         current = below
         below = current.below
-
 
     current = section
     above = section.above
@@ -164,13 +167,57 @@ def get_needed_scenes(section):
             "y": y,
             "z": z
         }
-        if index > -3:  # There is essentially never a useful cardinal scene 3 sections above, so we can ignore them
-            generate_cardinal_scenes(above, index, camera_pos, root)
-        generate_vertical_scene(above, index, camera_pos, root, "skybox_up")
+
+        if index < -3:  # Only 3 scenes above
+            break
+        generate_multi_camera(above, index, camera_pos, root, True)
 
         index -= 1
         current = above
         above = current.above
+
+
+base_camera = {
+    "name": "camera 1",
+    "position": {
+        "x": 5440.0,
+        "y": 128.0,
+        "z": 24.0
+    },
+    "orientation": {
+        "roll": 0.0,
+        "pitch": -1.5707963267948966,
+        "yaw": 3.141592653589793
+    },
+    "projectionMode": "PINHOLE",
+    "fov": 90.0,
+    "dof": "Infinity",
+    "focalOffset": 2.0
+}
+
+
+def generate_multi_camera(section, index, camera_position, root, above):
+    scene = copy.deepcopy(base_scene)
+    scene['world']['path'] = os.path.abspath('../../worlds/' + section.world)
+    scene['chunkList'] = generate_chunks(*section.region)
+
+    scene['name'] = section.name + "_" + str(index)
+
+    for name, orientation in skybox_orientations.items():
+        scene['cameraPresets'][name] = copy.deepcopy(base_camera)
+        scene['cameraPresets'][name]['name'] = name
+        scene['cameraPresets'][name]['position'] = camera_position
+        scene['cameraPresets'][name]['orientation'] = orientation
+
+    if above is not None:
+        vertical = "skybox_up" if above else "skybox_down"
+        scene['cameraPresets'][vertical] = copy.deepcopy(base_camera)
+        scene['cameraPresets'][vertical]['name'] = vertical
+        scene['cameraPresets'][vertical]['position'] = camera_position
+        scene['cameraPresets'][vertical]['orientation'] = vertical_orientations[vertical]
+
+    with open(root + str(index) + ".json", 'w+') as fp:
+        json.dump(scene, fp)
 
 
 def generate_cardinal_scenes(section, index, camera_pos, root):
@@ -209,7 +256,7 @@ def generate_vertical_scene(section, index, camera_pos, root, flag):
 
 
 if __name__ == '__main__':
-    with open('../../configs/config.yml') as fp:
+    with open('../../configs/config_newest.yml') as fp:
         deeper_config = yaml.load(fp)
 
     sections_data = deeper_config['sections']
