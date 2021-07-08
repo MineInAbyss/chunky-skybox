@@ -1,3 +1,4 @@
+import argparse
 import pathlib
 
 from PIL import Image, ImageFilter, ImageChops
@@ -66,11 +67,15 @@ class Stitcher:
 
 
 if __name__ == "__main__":
-    scene_dir = '../../scenes/city/'
+    parser = argparse.ArgumentParser(description='Generate Skybox Configs.')
+    parser.add_argument('--snapshot_dir', type=pathlib.Path,
+                        help="Path to the directory containing chunky snapshots rendered by the skybox generator.")
+
+    args = parser.parse_args()
 
     data = {}
 
-    files = glob(scene_dir + "snapshots/" + '*_*.png')
+    files = glob(str(args.snapshot_dir) + "/" + '*_*.png')
     for f_name in files:
         base_name = os.path.splitext(os.path.basename(f_name))[0]
         direction = base_name.split("_")[3]
@@ -80,16 +85,8 @@ if __name__ == "__main__":
     for key, list in data.items():
         list.sort(key=lambda a: abs(int(os.path.splitext(os.path.basename(a))[0].split("_")[1])))
 
-    # n = "{}{}_skybox_north.png".format(scene_dir,0)
-    # s = "{}{}_skybox_south.png".format(scene_dir,0)
-    # w = "{}{}_skybox_west.png".format(scene_dir,0)
-    # e = "{}{}_skybox_east.png".format(scene_dir,0)
-    #
     stitcher = Stitcher(data.setdefault("north", []), data.setdefault("south", []), data.setdefault("east", []),
                         data.setdefault("west", []), data.setdefault("up", []), data.setdefault("down", []))
 
-    pathlib.Path(scene_dir + "renders/").mkdir(parents=True, exist_ok=True)
-
-    # lambda image: image.filter(ImageFilter.GaussianBlur(radius=3))
     result = stitcher.stitch().save(
-        scene_dir + "renders/" + "skybox.png")
+        args.snapshot_dir / "skybox.png")

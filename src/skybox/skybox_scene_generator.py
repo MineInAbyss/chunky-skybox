@@ -1,5 +1,8 @@
+import argparse
 import json
 import math
+import pathlib
+
 import yaml
 import os
 import operator
@@ -94,7 +97,7 @@ class Section:
 # Fun fact. None of the chunks loaded for one sections skybox
 # are guaranteed to be needed for the next :)
 # TODO top and bottom of boxes are a pain
-def get_needed_scenes(section):
+def get_needed_scenes(section, worlds_dir: pathlib.Path, scenes_dir: pathlib.Path):
     # First get the standard scenes:
 
     # TODO I would like to make an option to render by offsetting to get center coordinates
@@ -117,14 +120,14 @@ def get_needed_scenes(section):
         "z": center_y
     }
 
-    root = '../../scenes/' + section.name + '/'
+    root = scenes_dir / section.name
 
     try:
         os.mkdir(root)
     except Exception:
         pass
 
-    generate_multi_camera(section, 0, camera_pos, root, None)
+    generate_multi_camera(section, 0, camera_pos, root, None, worlds_dir)
 
     current = section
     below = section.below
@@ -145,7 +148,7 @@ def get_needed_scenes(section):
         if index > 3:  # Only 3 scenes below
             break
 
-        generate_multi_camera(below, index, camera_pos, root, False)
+        generate_multi_camera(below, index, camera_pos, root, False, worlds_dir)
 
         index += 1
         current = below
@@ -170,7 +173,7 @@ def get_needed_scenes(section):
 
         if index < -3:  # Only 3 scenes above
             break
-        generate_multi_camera(above, index, camera_pos, root, True)
+        generate_multi_camera(above, index, camera_pos, root, True, worlds_dir)
 
         index -= 1
         current = above
@@ -196,9 +199,9 @@ base_camera = {
 }
 
 
-def generate_multi_camera(section, index, camera_position, root, above):
+def generate_multi_camera(section, index, camera_position, root, above, worlds_dir: pathlib.Path):
     scene = copy.deepcopy(base_scene)
-    scene['world']['path'] = os.path.abspath('../../worlds/' + section.world)
+    scene['world']['path'] = str((worlds_dir / section.world).absolute().resolve())
     scene['chunkList'] = generate_chunks(*section.region)
 
     scene['name'] = section.name + "_" + str(index)
@@ -216,47 +219,23 @@ def generate_multi_camera(section, index, camera_position, root, above):
         scene['cameraPresets'][vertical]['position'] = camera_position
         scene['cameraPresets'][vertical]['orientation'] = vertical_orientations[vertical]
 
-    with open(root + str(index) + ".json", 'w+') as fp:
-        json.dump(scene, fp)
-
-
-def generate_cardinal_scenes(section, index, camera_pos, root):
-    for name, orientation in skybox_orientations.items():
-        scene = copy.deepcopy(base_scene)
-        world_path = os.path.abspath('../../worlds/' + section.world)
-        chunks = generate_chunks(*section.region)
-
-        scene['world']['path'] = world_path
-        scene['chunkList'] = chunks
-
-        # All these scenes will share chunks so use the same name!
-        scene['name'] = str(index)
-        scene['camera']['orientation'] = orientation
-        scene['camera']['position'] = camera_pos
-
-        with open(root + str(index) + '_' + name + ".json", 'w+') as fp:
-            json.dump(scene, fp)
-
-
-def generate_vertical_scene(section, index, camera_pos, root, flag):
-    scene = copy.deepcopy(base_scene)
-    world_path = os.path.abspath('../../worlds/' + section.world)
-    chunks = generate_chunks(*section.region)
-
-    scene['world']['path'] = world_path
-    scene['chunkList'] = chunks
-
-    # All these scenes will share chunks so use the same name!
-    scene['name'] = str(index)
-    scene['camera']['orientation'] = vertical_orientations[flag]
-    scene['camera']['position'] = camera_pos
-
-    with open(root + str(index) + '_' + flag + ".json", 'w+') as fp:
+    with open(root / (str(index) + ".json"), 'w+') as fp:
         json.dump(scene, fp)
 
 
 if __name__ == '__main__':
-    with open('../../configs/config_newest.yml') as fp:
+    parser = argparse.ArgumentParser(description='Generate Skybox Configs.')
+    parser.add_argument('--deeper_world_config', type=pathlib.Path,
+                        default="../../configs/config.yml",
+                        help="Path to the deeper world config file.")
+    parser.add_argument('--worlds_dir', type=pathlib.Path, default="../../worlds",
+                        help="Directory containing all required minecraft worlds as specified in config.")
+    parser.add_argument('--output_dir', type=pathlib.Path, default="../../scenes",
+                        help="Directory to write scenes to.")
+
+    args = parser.parse_args()
+
+    with open(args.deeper_world_config) as fp:
         deeper_config = yaml.load(fp)
 
     sections_data = deeper_config['sections']
@@ -279,53 +258,4 @@ if __name__ == '__main__':
 
     # This isn't pretty or fast but it doesn't need to be compared to render times
     for section in sections:
-        needed_scenes = get_needed_scenes(section)
-
-    # center_x = center_y = None
-    # prev_ref = (0,0)
-    #
-    # for section in deeper_config['sections']:
-    #     section_name = section['name']
-    #     scene_base_name = section_name + '_scene'
-    #     scene_world_path = os.path.abspath('../../worlds/' + section['world'])
-    #
-    #     own_ref_top = section['refTop'][::2]
-    #
-    #     scene_chunks = generate_chunks(*section['region'])
-    #
-    #
-    #     if not center_x:
-    #         center_x = (section['region'][0] + section['region'][2]) / 2
-    #         center_y = (section['region'][1] + section['region'][3]) / 2
-    #     else:
-    #         center_x, center_y = convert_to_central((center_x, center_y), prev_ref,own_ref_top)
-    #
-    #
-    #     scene_camera_position = {
-    #         "x": center_x,
-    #         "y": 128,
-    #         "z": center_y
-    #     }
-    #
-    #     with open(base_scene_path) as fp:
-    #         base_scene = json.load(fp)
-    #
-    #     base_scene['world']['path'] = scene_world_path
-    #     base_scene['chunkList'] = scene_chunks
-    #
-    #     try:
-    #         os.mkdir('../../scenes/' + scene_base_name)
-    #     except Exception:
-    #         pass
-    #
-    #     for key,value in skybox_orientations.items():
-    #         name = key
-    #         base_scene['name'] = name
-    #         base_scene['camera']['orientation'] = value
-    #         base_scene['camera']['position'] = scene_camera_position
-    #
-    #         with open('../../scenes/' + scene_base_name + "/" + name + ".json", 'w+') as fp:
-    #             json.dump(base_scene, fp)
-    #
-    #
-    #     prev_ref = section['refBottom'][::2]
+        get_needed_scenes(section, args.worlds_dir, args.output_dir)
