@@ -93,7 +93,7 @@ if __name__ == "__main__":
         data.setdefault(direction, []).append(f_name)
 
     for key, list in data.items():
-        list.sort(key=lambda a: abs(int(os.path.splitext(os.path.basename(a))[0].split("_")[1])))
+        list.sort(key=lambda a: int(os.path.splitext(os.path.basename(a))[0].split("_")[1]))
 
     stitcher = Stitcher(data.setdefault("north", []), data.setdefault("south", []), data.setdefault("east", []),
                         data.setdefault("west", []), data.setdefault("up", []), data.setdefault("down", []))
