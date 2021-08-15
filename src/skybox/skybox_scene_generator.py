@@ -97,7 +97,7 @@ class Section:
 # Fun fact. None of the chunks loaded for one sections skybox
 # are guaranteed to be needed for the next :)
 # TODO top and bottom of boxes are a pain
-def get_needed_scenes(section, worlds_dir: pathlib.Path, scenes_dir: pathlib.Path):
+def get_needed_scenes(section, worlds_dir: pathlib.Path, scenes_dir: pathlib.Path, y1: int):
     # First get the standard scenes:
 
     # TODO I would like to make an option to render by offsetting to get center coordinates
@@ -116,7 +116,7 @@ def get_needed_scenes(section, worlds_dir: pathlib.Path, scenes_dir: pathlib.Pat
     center_y = (section.region[1] + section.region[3]) / 2
     camera_pos = {
         "x": center_x,
-        "y": 0,
+        "y": y1,
         "z": center_y
     }
 
@@ -131,7 +131,7 @@ def get_needed_scenes(section, worlds_dir: pathlib.Path, scenes_dir: pathlib.Pat
 
     current = section
     below = section.below
-    center_to_translate = (center_x, 0, center_y)
+    center_to_translate = (center_x, y1, center_y)
 
     index = 1
 
@@ -156,7 +156,7 @@ def get_needed_scenes(section, worlds_dir: pathlib.Path, scenes_dir: pathlib.Pat
 
     current = section
     above = section.above
-    center_to_translate = (center_x, 0, center_y)
+    center_to_translate = (center_x, y1, center_y)
     print(current)
 
     index = -1
@@ -232,6 +232,8 @@ if __name__ == '__main__':
                         help="Directory containing all required minecraft worlds as specified in config.")
     parser.add_argument('--output_dir', type=pathlib.Path, default="../../scenes",
                         help="Directory to write scenes to.")
+    parser.add_argument('--y', type=int, default=0,
+                        help="y level to gen for")
 
     args = parser.parse_args()
 
@@ -241,6 +243,8 @@ if __name__ == '__main__':
     sections_data = deeper_config['sections']
 
     sections = []
+
+    base_camera["position"]["y"] = args.y
 
     prev = None
     for section_data in sections_data:
@@ -258,4 +262,4 @@ if __name__ == '__main__':
 
     # This isn't pretty or fast but it doesn't need to be compared to render times
     for section in sections:
-        get_needed_scenes(section, args.worlds_dir, args.output_dir)
+        get_needed_scenes(section, args.worlds_dir, args.output_dir, args.y)
