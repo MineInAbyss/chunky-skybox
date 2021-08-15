@@ -38,11 +38,7 @@ if __name__ == '__main__':
     files = glob(scene_dir + '*.json')
     files = sorted([to_scene_data(f_name) for f_name in files], key=lambda a: a["index"])
 
-    skip = "1.json"
-
     for data in files:
-        if(data["path"].endswith(skip)):
-            continue
         startTime = datetime.now()
         base_name = data["base"]
         index = data["index"]
