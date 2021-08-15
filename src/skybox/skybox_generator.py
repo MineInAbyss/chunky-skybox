@@ -5,7 +5,6 @@ from datetime import datetime
 from glob import glob
 from subprocess import call
 
-
 FNULL = open(os.devnull, 'w')
 
 
@@ -51,7 +50,8 @@ if __name__ == '__main__':
 
         print("Rendering {}...".format(data["path"]))
 
-        call_args = ["java", "-jar", "../../bin/chunky-core.jar", "ChunkyMain", "-threads", str(args.threads),
+        call_args = ["java", "-cp", "../../bin/*", "-DlogLevel=INFO", "se.llbit.chunky.main.Chunky", "-threads",
+                     str(args.threads),
                      "-render", data["path"], "-f",
                      "-target",
                      str(args.spp)]
