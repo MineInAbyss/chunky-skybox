@@ -3,7 +3,7 @@
   "name": "template",
   "width": 1024,
   "height": 1024,
-  "yClipMin": 0,
+  "yClipMin": -256,
   "yClipMax": 256,
   "exposure": 1.0,
   "postprocess": "GAMMA",
@@ -41,7 +41,7 @@
     "name": "camera 1",
     "position": {
       "x": 5440.0,
-      "y": 128.0,
+      "y": 0.0,
       "z": 24.0
     },
     "orientation": {

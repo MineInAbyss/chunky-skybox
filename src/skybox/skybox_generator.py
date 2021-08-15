@@ -27,8 +27,8 @@ if __name__ == '__main__':
                         help="Number of threads to use for render workers")
     parser.add_argument('--scene_dir', type=pathlib.Path,
                         help="Directory containing the chunky scene configs. Also will be output directory of renders.")
-    parser.add_argument('--look_above', type=int, default=2, help="How many sections to look up when rendering.")
-    parser.add_argument('--look_below', type=int, default=2, help="How many sections to look down when rendering.")
+    parser.add_argument('--look_above', type=int, default=1, help="How many sections to look up when rendering.")
+    parser.add_argument('--look_below', type=int, default=1, help="How many sections to look down when rendering.")
 
     args = parser.parse_args()
 
@@ -38,7 +38,11 @@ if __name__ == '__main__':
     files = glob(scene_dir + '*.json')
     files = sorted([to_scene_data(f_name) for f_name in files], key=lambda a: a["index"])
 
+    skip = "1.json"
+
     for data in files:
+        if(data["path"].endswith(skip)):
+            continue
         startTime = datetime.now()
         base_name = data["base"]
         index = data["index"]
@@ -50,7 +54,7 @@ if __name__ == '__main__':
 
         print("Rendering {}...".format(data["path"]))
 
-        call_args = ["java", "-cp", "../../bin/*", "-DlogLevel=INFO", "se.llbit.chunky.main.Chunky", "-threads",
+        call_args = ["java", "-Xms8g", "-cp", "../../bin/*", "-DlogLevel=INFO", "se.llbit.chunky.main.Chunky", "-threads",
                      str(args.threads),
                      "-render", data["path"], "-f",
                      "-target",

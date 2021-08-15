@@ -56,20 +56,30 @@ class Stitcher:
 
         # self._assert_same_size([s_img, n_img, w_img, e_img])
 
-        self.stitch_main(skybox_img, postprocess, self.stitch_region(self.south), (box_size * 2, 0))
-        self.stitch_main(skybox_img, postprocess, self.stitch_region(self.north), (box_size, box_size))
-        self.stitch_main(skybox_img, postprocess, self.stitch_region(self.east), (box_size * 2, box_size))
-        self.stitch_main(skybox_img, postprocess, self.stitch_region(self.west), (0, box_size))
-        self.stitch_main(skybox_img, postprocess, self.stitch_region(self.down), (0, 0))
-        self.stitch_main(skybox_img, postprocess, self.stitch_region(self.up), (box_size, 0))
+        south = self.stitch_region(self.south)
+        north = self.stitch_region(self.north)
+        east = self.stitch_region(self.east)
+        west = self.stitch_region(self.west)
+        down = self.stitch_region(self.down)
+        up = self.stitch_region(self.up)
 
-        return skybox_img
+        self.stitch_main(skybox_img, postprocess, south, (box_size * 2, 0))
+        self.stitch_main(skybox_img, postprocess, north, (box_size, box_size))
+        self.stitch_main(skybox_img, postprocess, east, (box_size * 2, box_size))
+        self.stitch_main(skybox_img, postprocess, west, (0, box_size))
+        self.stitch_main(skybox_img, postprocess, down, (0, 0))
+        self.stitch_main(skybox_img, postprocess, up, (box_size, 0))
+
+        return {"skybox": skybox_img, "south": south, "north": north, "east": east, "west": west, "down": down,
+                "up": up}
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate Skybox Configs.')
     parser.add_argument('--snapshot_dir', type=pathlib.Path,
                         help="Path to the directory containing chunky snapshots rendered by the skybox generator.")
+    parser.add_argument('--prefix', type=str,
+                        help="Prefix for image names.")
 
     args = parser.parse_args()
 
@@ -88,5 +98,5 @@ if __name__ == "__main__":
     stitcher = Stitcher(data.setdefault("north", []), data.setdefault("south", []), data.setdefault("east", []),
                         data.setdefault("west", []), data.setdefault("up", []), data.setdefault("down", []))
 
-    result = stitcher.stitch().save(
-        args.snapshot_dir / "skybox.png")
+    for name, image in stitcher.stitch().items():
+        image.save(args.snapshot_dir / (args.prefix + name + ".png"))

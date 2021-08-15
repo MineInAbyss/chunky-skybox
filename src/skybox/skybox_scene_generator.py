@@ -116,7 +116,7 @@ def get_needed_scenes(section, worlds_dir: pathlib.Path, scenes_dir: pathlib.Pat
     center_y = (section.region[1] + section.region[3]) / 2
     camera_pos = {
         "x": center_x,
-        "y": 128,
+        "y": 0,
         "z": center_y
     }
 
@@ -127,11 +127,11 @@ def get_needed_scenes(section, worlds_dir: pathlib.Path, scenes_dir: pathlib.Pat
     except Exception:
         pass
 
-    generate_multi_camera(section, 0, camera_pos, root, None, worlds_dir)
+    generate_multi_camera(section, 0, camera_pos, root, False, worlds_dir)
 
     current = section
     below = section.below
-    center_to_translate = (center_x, 128, center_y)
+    center_to_translate = (center_x, 0, center_y)
 
     index = 1
 
@@ -156,7 +156,7 @@ def get_needed_scenes(section, worlds_dir: pathlib.Path, scenes_dir: pathlib.Pat
 
     current = section
     above = section.above
-    center_to_translate = (center_x, 128, center_y)
+    center_to_translate = (center_x, 0, center_y)
     print(current)
 
     index = -1
@@ -184,7 +184,7 @@ base_camera = {
     "name": "camera 1",
     "position": {
         "x": 5440.0,
-        "y": 128.0,
+        "y": 0.0,
         "z": 24.0
     },
     "orientation": {
