@@ -127,7 +127,7 @@ def get_needed_scenes(section, worlds_dir: pathlib.Path, scenes_dir: pathlib.Pat
     except Exception:
         pass
 
-    generate_multi_camera(section, 0, camera_pos, root, False, worlds_dir)
+    generate_multi_camera(section, 0, camera_pos, root, ["skybox_up", "skybox_down"], worlds_dir)
 
     current = section
     below = section.below
@@ -148,7 +148,7 @@ def get_needed_scenes(section, worlds_dir: pathlib.Path, scenes_dir: pathlib.Pat
         if index > 3:  # Only 3 scenes below
             break
 
-        generate_multi_camera(below, index, camera_pos, root, False, worlds_dir)
+        generate_multi_camera(below, index, camera_pos, root, ["skybox_down"], worlds_dir)
 
         index += 1
         current = below
@@ -173,7 +173,7 @@ def get_needed_scenes(section, worlds_dir: pathlib.Path, scenes_dir: pathlib.Pat
 
         if index < -3:  # Only 3 scenes above
             break
-        generate_multi_camera(above, index, camera_pos, root, True, worlds_dir)
+        generate_multi_camera(above, index, camera_pos, root, ["skybox_up"], worlds_dir)
 
         index -= 1
         current = above
@@ -199,7 +199,7 @@ base_camera = {
 }
 
 
-def generate_multi_camera(section, index, camera_position, root, above, worlds_dir: pathlib.Path):
+def generate_multi_camera(section, index, camera_position, root, verticals, worlds_dir: pathlib.Path):
     scene = copy.deepcopy(base_scene)
     scene['world']['path'] = str((worlds_dir / section.world).absolute().resolve())
     scene['chunkList'] = generate_chunks(*section.region)
@@ -212,8 +212,7 @@ def generate_multi_camera(section, index, camera_position, root, above, worlds_d
         scene['cameraPresets'][name]['position'] = camera_position
         scene['cameraPresets'][name]['orientation'] = orientation
 
-    if above is not None:
-        vertical = "skybox_up" if above else "skybox_down"
+    for vertical in verticals:
         scene['cameraPresets'][vertical] = copy.deepcopy(base_camera)
         scene['cameraPresets'][vertical]['name'] = vertical
         scene['cameraPresets'][vertical]['position'] = camera_position

@@ -1,10 +1,10 @@
 import argparse
-import pathlib
-
-from PIL import Image, ImageFilter, ImageChops
-from functools import reduce
 import os
+import pathlib
+from functools import reduce
 from glob import glob
+
+from PIL import Image
 
 
 class Stitcher:
@@ -32,14 +32,19 @@ class Stitcher:
 
     @staticmethod
     def compose(x, y):
-        x.alpha_composite(y)
-        return x
+        return Image.alpha_composite(x, y)
 
     def stitch_region(self, paths):
         if not paths:
             return None
-        images_in_order = reversed([self._load_image(path) for path in paths])
-        return reduce(self.compose, images_in_order)
+        images = {k: self._load_image(v) for (k, v) in paths.items()}
+
+        base = images.pop(0) if 0 in images else Image.new('RGBA', next(iter(images.values())).size)
+
+        top = reduce(self.compose, [v for (k, v) in sorted(images.items(), key=lambda a: a[0]) if k < 0], base)
+        bottom = reduce(self.compose,
+                        [v for (k, v) in sorted(images.items(), key=lambda a: a[0], reverse=True) if k > 0], base)
+        return Image.alpha_composite(Image.alpha_composite(top, bottom), base)
 
     def stitch_main(self, skybox_image, postprocess, composite, region):
         if not composite:
@@ -70,8 +75,9 @@ class Stitcher:
         self.stitch_main(skybox_img, postprocess, down, (0, 0))
         self.stitch_main(skybox_img, postprocess, up, (box_size, 0))
 
-        return {"skybox": skybox_img, "south": south, "north": north, "east": east, "west": west, "down": down,
-                "up": up}
+        return {k: v for (k, v) in
+                {"skybox": skybox_img, "south": south, "north": north, "east": east, "west": west, "down": down,
+                 "up": up}.items() if v}
 
 
 if __name__ == "__main__":
@@ -83,20 +89,22 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    data = {}
+    directions_to_paths = {}
 
     files = glob(str(args.snapshot_dir) + "/" + '*_*.png')
     for f_name in files:
         base_name = os.path.splitext(os.path.basename(f_name))[0]
         direction = base_name.split("_")[3]
 
-        data.setdefault(direction, []).append(f_name)
+        directions_to_paths.setdefault(direction, []).append(f_name)
 
-    for key, list in data.items():
-        list.sort(key=lambda a: int(os.path.splitext(os.path.basename(a))[0].split("_")[1]))
+    data = {}
 
-    stitcher = Stitcher(data.setdefault("north", []), data.setdefault("south", []), data.setdefault("east", []),
-                        data.setdefault("west", []), data.setdefault("up", []), data.setdefault("down", []))
+    for key, vals in directions_to_paths.items():
+        data[key] = {int(os.path.splitext(os.path.basename(a))[0].split("_")[1]): a for a in vals}
+
+    stitcher = Stitcher(data.setdefault("north", {}), data.setdefault("south", {}), data.setdefault("east", {}),
+                        data.setdefault("west", {}), data.setdefault("up", {}), data.setdefault("down", {}))
 
     for name, image in stitcher.stitch().items():
         image.save(args.snapshot_dir / (args.prefix + name + ".png"))
